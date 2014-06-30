@@ -2,18 +2,18 @@ class AppDelegate
   attr_accessor :status_menu, :results
 
   @@labels = {
-    "phpusd" => { label: "USD", url: "" },
-    "bitstamp" => { label: "Bitstamp", url: "http://www.bitstamp.com" },
-    "coinbase" => { label: "Coinbase", url: "http://www.coinbase.com" },
-    "localbitcoins" => { label: "Local Bitcoins", url: "http://localbitcoins.com" },
-    "coinxchangebuy" => { label: "Coinxchange", url: "http://coinxchange.ph" },
-    "coinxchangesell" => { label: "Coinxchange (sell)", url: "http://coinxchange.ph" },
-    "buybitcoinbuy" => { label: "Buybitcoin.ph", url: "http://buybitcoin.ph/buy" },
-    "buybitcoinsell" => { label: "Buybitcoin.ph (sell)", url: "http://buybitcoin.ph/sell" },
-    "coinsbuy" => { label: "Coins.ph", url: "http://coins.ph" },
-    "coinssell" => { label: "Coins.ph (sell)", url: "http://coins.ph" },
-    "rebitsell" => { label: "Rebit (sell)", url: "http://rebit.ph" },
-    "bitmarketsell" => { label: "Bitmarket", url: "http://bitmarket.ph" }
+    "phpusd" => { label: "USD", url: "", type: 'buy' },
+    "bitstamp" => { label: "Bitstamp", url: "http://www.bitstamp.com", type: 'buy' },
+    "coinbase" => { label: "Coinbase", url: "http://www.coinbase.com", type: 'buy' },
+    "localbitcoins" => { label: "Local Bitcoins", url: "http://localbitcoins.com", type: 'buy' },
+    "coinxchangebuy" => { label: "Coinxchange", url: "http://coinxchange.ph",  type: 'buy' },
+    "coinxchangesell" => { label: "Coinxchange (sell)", url: "http://coinxchange.ph", type: 'sell' },
+    "buybitcoinbuy" => { label: "Buybitcoin.ph", url: "http://buybitcoin.ph/buy", type: 'buy' },
+    "buybitcoinsell" => { label: "Buybitcoin.ph (sell)", url: "http://buybitcoin.ph/sell", type: 'sell' },
+    "coinsbuy" => { label: "Coins.ph", url: "http://coins.ph", type: 'buy' },
+    "coinssell" => { label: "Coins.ph (sell)", url: "http://coins.ph", type: 'sell' },
+    "rebitsell" => { label: "Rebit (sell)", url: "http://rebit.ph", type: 'sell' },
+    "bitmarketsell" => { label: "Bitmarket (sell)", url: "http://bitmarket.ph", type: 'sell' }
   }
 
   def applicationDidFinishLaunching(notification)
@@ -41,13 +41,22 @@ class AppDelegate
     BW::HTTP.get(url) do |response|
       if response.ok?
         @results = BW::JSON.parse(response.body.to_str)
+        @results = Hash[@results.sort]
 
         resetMenuItems
         loadPreferredMarket
 
-        @results.each_pair do |key, value|
-          item = createMenuItem(key, "#{label(key)} - #{currency_format(value)}", 'setCurrentCurrency:')
-          status_menu.addItem item
+        %w(buy sell).each do |type|
+          titleItem = NSMenuItem.alloc.initWithTitle("#{type.capitalize} Prices", action: nil, keyEquivalent: "")
+          titleItem.setEnabled false
+          status_menu.addItem titleItem
+          @results.each_pair do |key, value|
+            if market_type(key) == type
+              item = createMenuItem(key, "#{label(key)} - #{currency_format(value)}", 'setCurrentCurrency:')
+              status_menu.addItem item
+            end
+          end
+          status_menu.addItem NSMenuItem.separatorItem
         end
 
         @status_menu.addItem createMenuItem("", "Quit", 'terminate:')
@@ -83,6 +92,11 @@ class AppDelegate
     NSMenuItem.alloc.initWithTitle(name, action: action, keyEquivalent: '').tap do |item|
       item.key = key
     end
+  end
+
+  # Get market type. Is it buy or sell?
+  def market_type(key)
+    @@labels[key][:type] if @@labels[key]
   end
 
   # Human friendly label
