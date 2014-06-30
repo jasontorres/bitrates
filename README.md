@@ -30,7 +30,7 @@ Go to System Preferences -> Security & Privacy -> Click "Open Anyway" to allow i
 
 All source code is available here on github. Feel free to send a PR if you want to add your local market.
 
-However, it requires a Rubymotion license which you can purchase at [rubymotion.com](http://www.rubymotion.com)
+Feel free to modify and build your own. However, it requires a Rubymotion license which you can purchase at [rubymotion.com](http://www.rubymotion.com)
 
 
 Support and Donate!
